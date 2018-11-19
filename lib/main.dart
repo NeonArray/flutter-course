@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import './product_manager.dart';
+import './pages/home.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,12 +13,7 @@ class MyApp extends StatelessWidget {
 				primarySwatch: Colors.teal,
 				accentColor: Colors.yellowAccent,
 			),
-			home: Scaffold(
-				appBar: AppBar(
-					title: Text('EasyList'),
-				),
-				body: ProductManager(startingProduct: 'Food Tester'),
-			),
+			home: HomePage(),
 		);
 	}
 }
