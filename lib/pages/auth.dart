@@ -22,34 +22,48 @@ class _AuthPageState extends State<AuthPage> {
 	}
 
 	Widget _buildEmailTextField() {
-		return TextField(
+		return TextFormField(
 			keyboardType: TextInputType.emailAddress,
 			decoration: InputDecoration(
 				labelText: 'E-Mail',
 				filled: true,
 				fillColor: Colors.white,
 			),
-			onChanged: (String value) => setState(() => _emailValue = value),
+			validator: (String value) {
+				if (value.isEmpty || !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?").hasMatch(value)) {
+					return 'Invalid email address, please ente valid email';
+				}
+			},
+			onSaved: (String value) {
+				_formData['email'] = value;
+			}
 		);
 	}
 
 	Widget _buildPasswordTextField () {
-		return TextField(
+		return TextFormField(
 			obscureText: true,
 			decoration: InputDecoration(
 				labelText: 'Password',
 				filled: true,
 				fillColor: Colors.white,
 			),
-			onChanged: (String value) => setState(() => _passwordValue = value),
+			validator: (String value) {
+				if (value.isEmpty || value.length < 6) {
+					return 'Password invalid';
+				}
+			},
+			onSaved: (String value) {
+				_formData['password'] = value;
+			}
 		);
 	}
 
 	SwitchListTile _buildAcceptSwitchTile() {
 		return SwitchListTile(
-			value: _acceptTerms,
+			value: _formData['acceptTerms'],
 			onChanged: (bool value) {
-				setState(() => _acceptTerms = value);
+				setState(() => _formData['acceptTerms'] = value);
 			},
 			title: Text('Accept Terms'),
 		);
@@ -57,14 +71,23 @@ class _AuthPageState extends State<AuthPage> {
 
 	Widget _buildLoginButton() {
 		return RaisedButton(
-			color: Theme.of(context).primaryColor,
 			child: Text('LOGIN'),
-			onPressed: () => Navigator.pushReplacementNamed(context, '/products'),
+			onPressed: () {
+				if (!_formKey.currentState.validate() || !_formData['acceptTerms']) {
+					return;
+				}
+
+				_formKey.currentState.save();
+				Navigator.pushReplacementNamed(context, '/products');
+			},
 		);
 	}
 
 	@override
 	Widget build(BuildContext context) {
+		final double deviceWidth = MediaQuery.of(context).size.width;
+		final double targetWidth = deviceWidth > 768.0 ? 500.0 : deviceWidth * 0.85;
+
 		return Scaffold(
 			appBar: AppBar(
 				title: Text('Login'),
