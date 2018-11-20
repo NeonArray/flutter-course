@@ -76,19 +76,25 @@ class _AuthPageState extends State<AuthPage> {
 				padding: EdgeInsets.all(10.0),
 				child: Center(
 					child: SingleChildScrollView(
-						child: Column(
-							children: <Widget>[
-								_buildEmailTextField(),
-								SizedBox(
-									height: 10.0,
+						child: Container(
+							width: targetWidth,
+							child: Form(
+								key: _formKey,
+								child: Column(
+									children: <Widget>[
+										_buildEmailTextField(),
+										SizedBox(
+											height: 10.0,
+										),
+										_buildPasswordTextField(),
+										_buildAcceptSwitchTile(),
+										SizedBox(
+											height: 30.0,
+										),
+										_buildLoginButton(),
+									],
 								),
-								_buildPasswordTextField(),
-								_buildAcceptSwitchTile(),
-								SizedBox(
-									height: 30.0,
-								),
-								_buildLoginButton(),
-							],
+							),
 						),
 					),
 				),
