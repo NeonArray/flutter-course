@@ -35,13 +35,14 @@ class _MyAppState extends State<MyApp> {
 		return MaterialApp(
 			theme: ThemeData(
 				primarySwatch: Colors.teal,
-				accentColor: Colors.yellowAccent,
+				accentColor: Colors.grey,
 			),
 			routes: {
 				// The '/' is a special route that Flutter uses to show as the 'home' screen.
 				// you CANNOT use both the home: property in MaterialApp as well as this '/' route
 				// or it will throw an error. Use one or the other.
-				'/': (BuildContext context) => ProductsPage(_products),
+				'/': (BuildContext context) => AuthPage(),
+				'/products': (BuildContext context) => ProductsPage(_products),
 				'/admin': (BuildContext context) => ProductsAdminPage(_addProduct, _deleteProduct),
 			},
 			// This property allows us to use 'dynamic' named routes. Think of them as '/route/:id'
