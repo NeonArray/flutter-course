@@ -35,8 +35,10 @@ class _MyAppState extends State<MyApp> {
 	Widget build(BuildContext context) {
 		return MaterialApp(
 			theme: ThemeData(
+				brightness: Brightness.light,
 				primarySwatch: Colors.teal,
 				accentColor: Colors.grey,
+				buttonColor: Colors.deepPurple,
 			),
 			routes: {
 				// The '/' is a special route that Flutter uses to show as the 'home' screen.
