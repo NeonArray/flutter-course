@@ -10,63 +10,75 @@ class ProductCreatePage extends StatefulWidget {
 }
 
 class _ProductCreatePageState extends State<ProductCreatePage> {
-	String _titleValue = '';
-	String _descriptionValue = '';
-	double _priceValue = 0.0;
+	final Map<String, dynamic> _formData = {
+		'title': '',
+		'description': '',
+		'price': 0.0,
+		'image': 'assets/food.jpg',
+	};
+	final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
 	Widget _buildTitleTextField() {
-		return TextField(
+		return TextFormField(
 			decoration: InputDecoration(
 				labelText: 'Product Title',
 			),
-			onChanged: (String value) {
-				setState(() {
-					_titleValue = value;
-				});
+			validator: (String value) {
+				if (value.isEmpty || value.length < 5) {
+					return 'Title is required and should be 5+ characters';
+				}
+			},
+			onSaved: (String value) {
+				_formData['title'] = value;
 			},
 		);
 	}
 
 	Widget _buildDescriptionTextField() {
-		return TextField(
+		return TextFormField(
 			decoration: InputDecoration(
 				labelText: 'Product Description',
 			),
 			maxLines: 4,
-			onChanged: (String value) {
-				setState(() {
-					_descriptionValue = value;
-				});
+			validator: (String value) {
+				if (value.isEmpty || value.length < 10) {
+					return 'Description is required and should be 10+ characters';
+				}
+			},
+			onSaved: (String value) {
+				_formData['description'] = value;
 			},
 		);
 	}
 
 	Widget _buildPriceTextField() {
-		return TextField(
+		return TextFormField(
 			decoration: InputDecoration(
 				labelText: 'Product Price',
 			),
 			keyboardType: TextInputType.number,
-			onChanged: (String value) {
-				setState(() {
-					_priceValue = double.parse(value);
-				});
+			validator: (String value) {
+				if (value.isEmpty || !RegExp(r'^(?:[1-9]\d*|0)?(?:[.,]\d+)?$').hasMatch(value)) {
+					return 'Price is required and should be a number';
+				}
+			},
+			onSaved: (String value) {
+				_formData['price'] = double.parse(value);
 			},
 		);
 	}
 
-	Widget _buildSaveButton() {
+	Widget _buildSaveButton(Map<String, dynamic> product) {
 		return RaisedButton(
 			child: Text('Save'),
-			color: Theme.of(context).accentColor,
 			textColor: Colors.black,
 			onPressed: () {
-				final Map<String, dynamic> product = {
-					'title': _titleValue,
-					'description': _descriptionValue,
-					'price': _priceValue,
-					'image': 'assets/food.jpg',
-				};
+
+				if (!_formKey.currentState.validate()) {
+					return;
+				}
+
+				_formKey.currentState.save();
 
 				widget.addProduct(product);
 
