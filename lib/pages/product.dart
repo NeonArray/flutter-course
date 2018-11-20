@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../widgets/ui/title_default.dart';
+import '../widgets/products/address_tag.dart';
+
 class ProductPage extends StatelessWidget {
 	final String title;
 	final String imageUrl;
+	final double price;
+	final String description;
 
-	ProductPage(this.title, this.imageUrl);
+	ProductPage(this.title, this.imageUrl, this.price, this.description);
 
-	void _showWarningDialog(BuildContext context) {
-		showDialog(
-			context: context,
-			builder: (BuildContext context) {
-				return AlertDialog(
-					title: Text('Are you sure?'),
-					content: Text('This action cannot be undone'),
-					actions: <Widget>[
-						FlatButton(
-							child: Text('DISCARD'),
-							onPressed: () {
-								Navigator.pop(context);
-							},
+	Widget _buildAddressPriceRow() {
+		return Row(
+			mainAxisAlignment: MainAxisAlignment.center,
+			children: <Widget>[
+				AddressTag('Union Square San Francisco, CA'),
+				Container(
+					child: Text(
+						'|',
+						style: TextStyle(
+							color: Colors.grey,
 						),
-						FlatButton(
-							child: Text('CONTINUE'),
-							onPressed: () {
-								Navigator.pop(context); // close the dialog
-								Navigator.pop(context, true); // pass data to route
-							},
-						),
-					],
-				);
-			}
+					),
+					margin: EdgeInsets.symmetric(horizontal: 5.0),
+				),
+				Text(
+					'\$${price.toString()}',
+					style: TextStyle(
+						color: Colors.grey,
+						fontFamily: 'Oswald',
+					),
+				),
+			],
 		);
 	}
 
@@ -51,14 +54,14 @@ class ProductPage extends StatelessWidget {
 						Image.asset(imageUrl),
 						Container(
 							padding: EdgeInsets.all(10.0),
-							child: Text(title),
+							child: TitleDefault(title),
 						),
+						_buildAddressPriceRow(),
 						Container(
 							padding: EdgeInsets.all(10.0),
-							child: RaisedButton(
-								color: Theme.of(context).accentColor,
-								child: Text('DELETE'),
-								onPressed: () => _showWarningDialog(context),
+							child: Text(
+								description,
+								textAlign: TextAlign.center,
 							),
 						),
 					],
