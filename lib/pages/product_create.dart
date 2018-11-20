@@ -77,18 +77,33 @@ class _ProductCreatePageState extends State<ProductCreatePage> {
 	
     @override
     Widget build(BuildContext context) {
-    	return Container(
-			margin: EdgeInsets.all(10.0),
-			child: ListView(
-				children: <Widget>[
-					_buildTitleTextField(),
-					_buildDescriptionTextField(),
-					_buildPriceTextField(),
-					SizedBox(
-						height: 30.0,
+		final double deviceWidth = MediaQuery.of(context).size.width;
+		final double targetWidth = deviceWidth > 550.0 ? 500.0 : deviceWidth * 0.95;
+		final double targetPadding = deviceWidth - targetWidth;
+
+		return GestureDetector(
+			onTap: () {
+				// Remove focus from tex field node by instantiating an empty FocusNode.
+				FocusScope.of(context).requestFocus(FocusNode());
+			},
+			child: Container(
+				width: targetWidth,
+				margin: EdgeInsets.all(10.0),
+				child: Form(
+					key: _formKey,
+					child: ListView(
+						padding: EdgeInsets.symmetric(horizontal: targetPadding / 2),
+						children: <Widget>[
+							_buildTitleTextField(),
+							_buildDescriptionTextField(),
+							_buildPriceTextField(),
+							SizedBox(
+								height: 30.0,
+							),
+							_buildSaveButton(_formData),
+						],
 					),
-					_buildSaveButton(),
-				],
+				),
 			),
 		);
   	}
