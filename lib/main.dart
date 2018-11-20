@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import './pages/auth.dart';
 import './pages/products_admin.dart';
 import './pages/products.dart';
 import './pages/product.dart';
 
-void main() => runApp(MyApp());
+void main() {
+//	debugPaintSizeEnabled = true;
+	runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
-
 	@override
-	State<StatefulWidget> createState() {
-		return _MyAppState();
-	}
+	_MyAppState createState() => new _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
@@ -61,7 +62,9 @@ class _MyAppState extends State<MyApp> {
 					return MaterialPageRoute<bool>(
 						builder: (BuildContext context) => ProductPage(
 							_products[index]['title'],
-							_products[index]['image']
+							_products[index]['image'],
+							_products[index]['price'],
+							_products[index]['description'],
 						),
 					);
 				}
