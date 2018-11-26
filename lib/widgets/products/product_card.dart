@@ -13,6 +13,7 @@ class ProductCard extends StatelessWidget {
 
 	ProductCard(this.product, this.productIndex);
 
+
 	Widget _buildTitlePriceRow() {
 		return Container(
 			padding: EdgeInsets.all(10.0),
@@ -35,6 +36,7 @@ class ProductCard extends StatelessWidget {
 		);
 	}
 
+
 	Widget _buildActionButtons(BuildContext context) {
 		return ButtonBar(
 			alignment: MainAxisAlignment.center,
@@ -47,14 +49,24 @@ class ProductCard extends StatelessWidget {
 						'/product/' + productIndex.toString()
 					),
 				),
-				IconButton(
-					color: Colors.red,
-					icon: Icon(Icons.favorite_border),
-					onPressed: () {},
-				),
+				ScopedModelDescendant<ProductsModel>(
+					builder: (BuildContext context, Widget child, ProductsModel model) {
+						final IconData icon = model.products[productIndex].isFavorite ? Icons.favorite : Icons.favorite_border;
+
+						return IconButton(
+							color: Colors.red,
+							icon: Icon(icon),
+							onPressed: () {
+								model.selectProduct(productIndex);
+								model.toggleProductFavoriteStatus();
+							},
+						);
+					}
+				)
 			],
 		);
 	}
+
 
 	@override
 	Widget build(BuildContext context) {
