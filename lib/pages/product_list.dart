@@ -79,7 +79,7 @@ class _ProductListPage extends State<ProductListPage> {
 							),
 						);
 					},
-					itemCount: model.products.length,
+					itemCount: model.allProducts.length,
 				);
 			},
 		);
