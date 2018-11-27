@@ -49,10 +49,16 @@ class _MyAppState extends State<MyApp> {
 					}
 
 					if (pathElements[1] == 'product') {
-						final int index = int.parse(pathElements[2]);
+						String productId = pathElements[2];
+
+						final Product product = model.allProducts.firstWhere((Product product) {
+							return product.id == productId;
+						});
+
+						model.selectProduct(productId);
 
 						return MaterialPageRoute<bool>(
-							builder: (BuildContext context) => ProductPage(index),
+							builder: (BuildContext context) => ProductPage(product),
 						);
 					}
 
@@ -62,7 +68,7 @@ class _MyAppState extends State<MyApp> {
 				// the "null" is returned from onGenerateRoute.
 				onUnknownRoute: (RouteSettings settings) {
 					return MaterialPageRoute(
-						builder: (BuildContext context) => ProductsPage(),
+						builder: (BuildContext context) => ProductsPage(model),
 					);
 				},
 			)
