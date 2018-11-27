@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 
-import 'package:flutter_course/scoped_models/products.dart';
 import 'package:flutter_course/pages/auth.dart';
 import 'package:flutter_course/pages/products_admin.dart';
 import 'package:flutter_course/pages/products.dart';
 import 'package:flutter_course/pages/product.dart';
+import 'package:flutter_course/scoped_models/main.dart';
+import 'package:flutter_course/models/product.dart';
 
 void main() => runApp(MyApp());
 
