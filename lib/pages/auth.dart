@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+
+import 'package:flutter_course/scoped_models/main.dart';
 
 class AuthPage extends StatefulWidget {
 	@override
@@ -13,6 +16,7 @@ class _AuthPageState extends State<AuthPage> {
 	};
 	final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+
 	DecorationImage _buildBackgroundImage() {
 		return DecorationImage(
 			fit: BoxFit.cover,
@@ -23,6 +27,7 @@ class _AuthPageState extends State<AuthPage> {
 			image: AssetImage('assets/background.jpg'),
 		);
 	}
+
 
 	Widget _buildEmailTextField() {
 		return TextFormField(
@@ -43,6 +48,7 @@ class _AuthPageState extends State<AuthPage> {
 		);
 	}
 
+
 	Widget _buildPasswordTextField () {
 		return TextFormField(
 			obscureText: true,
@@ -62,6 +68,7 @@ class _AuthPageState extends State<AuthPage> {
 		);
 	}
 
+
 	SwitchListTile _buildAcceptSwitchTile() {
 		return SwitchListTile(
 			value: _formData['acceptTerms'],
@@ -72,19 +79,30 @@ class _AuthPageState extends State<AuthPage> {
 		);
 	}
 
-	Widget _buildLoginButton() {
-		return RaisedButton(
-			child: Text('LOGIN'),
-			onPressed: () {
-				if (!_formKey.currentState.validate() || !_formData['acceptTerms']) {
-					return;
-				}
 
-				_formKey.currentState.save();
-				Navigator.pushReplacementNamed(context, '/products');
-			},
+	Widget _buildLoginButton() {
+		return ScopedModelDescendant<MainModel>(
+			builder: (BuildContext context, Widget child, MainModel model) {
+				return RaisedButton(
+					child: Text('LOGIN'),
+					onPressed: () => _submitForm(model.login),
+				);
+			}
 		);
 	}
+
+
+	void _submitForm(Function login) {
+		if (!_formKey.currentState.validate() || !_formData['acceptTerms']) {
+			return;
+		}
+
+		_formKey.currentState.save();
+		login(_formData['email'], _formData['password']);
+
+		Navigator.pushReplacementNamed(context, '/products');
+	}
+
 
 	@override
 	Widget build(BuildContext context) {
