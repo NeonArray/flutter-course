@@ -32,8 +32,8 @@ class _MyAppState extends State<MyApp> {
 					// you CANNOT use both the home: property in MaterialApp as well as this '/' route
 					// or it will throw an error. Use one or the other.
 					'/': (BuildContext context) => AuthPage(),
-					'/products': (BuildContext context) => ProductsPage(),
-					'/admin': (BuildContext context) => ProductsAdminPage(null, null, null, null),
+					'/products': (BuildContext context) => ProductsPage(model),
+					'/admin': (BuildContext context) => ProductsAdminPage(model),
 				},
 				// This property allows us to use 'dynamic' named routes. Think of them as '/route/:id'
 				// These routes are supplemental to the routes property/values as any routes that are hit
