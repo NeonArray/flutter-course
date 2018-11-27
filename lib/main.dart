@@ -19,8 +19,10 @@ class _MyAppState extends State<MyApp> {
 
 	@override
 	Widget build(BuildContext context) {
-		return ScopedModel<ProductsModel>(
-			model: ProductsModel(),
+		final MainModel model = MainModel();
+
+		return ScopedModel<MainModel>(
+			model: model,
 			child: MaterialApp(
 				theme: ThemeData(
 					brightness: Brightness.light,
