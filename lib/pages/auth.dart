@@ -59,7 +59,24 @@ class _AuthPageState extends State<AuthPage> {
 	}
 
 
-	Widget _buildPasswordTextField () {
+	Widget _buildPasswordConfirmTextField() {
+		return TextFormField(
+			obscureText: true,
+			decoration: InputDecoration(
+				labelText: 'Confirm Password',
+				filled: true,
+				fillColor: Colors.white,
+			),
+			validator: (String value) {
+				if (_passwordTextController.text != value) {
+					return 'Passwords must match';
+				}
+			},
+		);
+	}
+
+
+	Widget _buildPasswordTextField() {
 		return TextFormField(
 			obscureText: true,
 			decoration: InputDecoration(
@@ -67,6 +84,7 @@ class _AuthPageState extends State<AuthPage> {
 				filled: true,
 				fillColor: Colors.white,
 			),
+			controller: _passwordTextController,
 			validator: (String value) {
 				if (value.isEmpty || value.length < 6) {
 					return 'Password invalid';
