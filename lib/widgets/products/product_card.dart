@@ -11,6 +11,7 @@ class ProductCard extends StatelessWidget {
 	final Product product;
 	final int productIndex;
 
+
 	ProductCard(this.product, this.productIndex);
 
 
@@ -36,6 +37,7 @@ class ProductCard extends StatelessWidget {
 			)
 		);
 	}
+
 
 
 	Widget _buildActionButtons(BuildContext context) {
