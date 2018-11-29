@@ -3,10 +3,18 @@ import 'package:scoped_model/scoped_model.dart';
 
 import 'package:flutter_course/scoped_models/main.dart';
 
+
+enum AuthMode {
+	Signup,
+	Login,
+}
+
+
 class AuthPage extends StatefulWidget {
 	@override
 	_AuthPageState createState() => new _AuthPageState();
 }
+
 
 class _AuthPageState extends State<AuthPage> {
 	final Map<String, dynamic> _formData = {
@@ -15,6 +23,8 @@ class _AuthPageState extends State<AuthPage> {
 		'acceptTerms': false,
 	};
 	final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+	final TextEditingController _passwordTextController = TextEditingController();
+	AuthMode _authMode = AuthMode.Login;
 
 
 	DecorationImage _buildBackgroundImage() {
