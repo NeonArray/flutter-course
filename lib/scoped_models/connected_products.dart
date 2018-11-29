@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:flutter_course/env.dart';
 import 'package:flutter_course/models/product.dart';
 import 'package:flutter_course/models/user.dart';
 
@@ -12,50 +13,28 @@ import 'package:flutter_course/models/user.dart';
 /// ConnectedProductsModel would not be accessible outside of its' file.
 
 mixin ConnectedProductsModel on Model {
-	final String _baseUrl = 'https://flutter-products-6000a.firebaseio.com/products';
 	List<Product> _products = [];
 	User _authenticatedUser;
 	String _selectedProductId;
 	bool _isLoading = false;
 
 
-	void reset() {
+	void releaseUI() {
 		_isLoading = false;
 		notifyListeners();
 	}
 
 
-	Future<bool> addProduct(String title, String description, String image, double price) {
+	void prepareUI() {
 		_isLoading = true;
 		notifyListeners();
+	}
 
-		final Map<String, dynamic> productData = {
-			'title': title,
-			'description': description,
-			'image': 'https://fthmb.tqn.com/6JQIj_mV43sUlBmUvr2tZ35GIFo=/2000x1500/filters:fill(auto,1)/chocolate-bars-Cultura-RM-Exclusive-Diana-Miller-Getty-Images-57c762e23df78c71b64de4bf.jpg',
-			'price': price,
-			'userEmail': _authenticatedUser.email,
-			'userId': _authenticatedUser.id,
-		};
 
-		return http.post(
-			_baseUrl + '.json',
-			body: jsonEncode(productData),
-		).then((http.Response response) {
-			final Map<String, dynamic> responseData = json.decode(response.body);
-
-			_products.add(Product(
-				id: responseData['name'],
-				title: title,
-				description: description,
-				image: image,
-				price: price,
-				userEmail: _authenticatedUser.email,
-				userId: _authenticatedUser.id,
-			));
-
-			reset();
-		});
+	void interrogateStatusCode(int statusCode) {
+		if (statusCode != 200 && statusCode != 201) {
+			throw Exception('Status code response was not 200 or 201');
+		}
 	}
 }
 
@@ -106,52 +85,83 @@ mixin ProductsModel on ConnectedProductsModel {
 	}
 
 
-	Future<bool> fetchProducts() {
-		_isLoading = true;
-		notifyListeners();
+	Future<bool> addProduct(String title, String description, String image, double price) async {
+		prepareUI();
 
-		return http.get(_baseUrl + '.json')
-			.then((http.Response response) {
+		final Map<String, dynamic> productData = {
+			'title': title,
+			'description': description,
+			'image': 'https://fthmb.tqn.com/6JQIj_mV43sUlBmUvr2tZ35GIFo=/2000x1500/filters:fill(auto,1)/chocolate-bars-Cultura-RM-Exclusive-Diana-Miller-Getty-Images-57c762e23df78c71b64de4bf.jpg',
+			'price': price,
+			'userEmail': _authenticatedUser.email,
+			'userId': _authenticatedUser.id,
+		};
 
-				if (response.statusCode != 200 && response.statusCode != 201) {
-					reset();
-					return false;
-				}
+		try {
+			final http.Response response = await http.post(
+				baseUrl + '.json',
+				body: jsonEncode(productData),
+			);
 
-				final List<Product> fetchedProductList = [];
-				final Map<String, dynamic> productListData = json.decode(response.body);
+			interrogateStatusCode(response.statusCode);
 
-				if (productListData == null) {
-					reset();
-					return false;
-				}
+			final Map<String, dynamic> responseData = json.decode(response.body);
 
-				productListData.forEach((String productId, dynamic productData) {
-					final Product product = Product(
-						id: productId,
-						title: productData['title'],
-						description: productData['description'],
-						image: productData['image'],
-						price: productData['price'],
-						userEmail: productData['userEmail'],
-						userId: productData['userId'],
-					);
+			_products.add(Product(
+				id: responseData['name'],
+				title: title,
+				description: description,
+				image: image,
+				price: price,
+				userEmail: _authenticatedUser.email,
+				userId: _authenticatedUser.id,
+			));
 
-					fetchedProductList.add(product);
-				});
-
-				_products = fetchedProductList;
-
-				reset();
-
-				_selectedProductId = null;
-
-				return true;
-			});
+			return true;
+		} catch (error) {
+			print(error);
+			return false;
+		} finally {
+			releaseUI();
+		}
 	}
 
 
-	Future<Null> updateProduct(String title, String description, String image, double price) {
+	Future<bool> fetchProducts() async {
+		prepareUI();
+
+		try {
+			final http.Response response = await http.get(baseUrl + '.json');
+
+			interrogateStatusCode(response.statusCode);
+
+			final List<Product> fetchedProductList = [];
+			final Map<String, dynamic> productListData = json.decode(response.body);
+
+			if (productListData == null) {
+				throw Exception('Product list is empty');
+			}
+
+			productListData.forEach((String productId, dynamic productData) {
+				final Product product = Product(id: productId, title: productData['title'], description: productData['description'], image: productData['image'], price: productData['price'], userEmail: productData['userEmail'], userId: productData['userId'],);
+
+				fetchedProductList.add(product);
+			});
+
+			_products = fetchedProductList;
+			_selectedProductId = null;
+
+			return true;
+		} catch (error) {
+			print(error);
+			return false;
+		} finally {
+			releaseUI();
+		}
+	}
+
+
+	Future<bool> updateProduct(String title, String description, String image, double price) async {
 		_isLoading = true;
 		notifyListeners();
 
@@ -164,10 +174,11 @@ mixin ProductsModel on ConnectedProductsModel {
 			'userId': selectedProduct.userId,
 		};
 
-		return http.put(
-			_baseUrl + '/${selectedProduct.id}.json',
-			body: json.encode(updateData),
-		).then((http.Response response) {
+		try {
+			await http.put(
+				baseUrl + '/${selectedProduct.id}.json',
+				body: json.encode(updateData),
+			);
 			final Product udpatedProduct = Product(
 				id: selectedProduct.id,
 				title: title,
@@ -179,12 +190,17 @@ mixin ProductsModel on ConnectedProductsModel {
 			);
 			_products[selectedProductIndex] = udpatedProduct;
 
-			reset();
-		});
+			return true;
+		} catch (error) {
+			print(error);
+			return false;
+		} finally {
+			releaseUI();
+		}
 	}
 
 
-	void deleteProduct() {
+	Future<bool> deleteProduct() async {
 		final deletedProductId = selectedProduct.id;
 		_isLoading = true;
 
@@ -192,10 +208,16 @@ mixin ProductsModel on ConnectedProductsModel {
 		_selectedProductId = null;
 		notifyListeners();
 
-		http.delete(_baseUrl + '/' + deletedProductId + '.json')
-			.then((http.Response response) {
-				reset();
-			});
+		try {
+			await http.delete(baseUrl + '/' + deletedProductId + '.json');
+
+			return true;
+		} catch (error) {
+			print(error);
+			return false;
+		} finally {
+			releaseUI();
+		}
 	}
 
 
@@ -228,6 +250,41 @@ mixin ProductsModel on ConnectedProductsModel {
 
 
 mixin UserModel on ConnectedProductsModel {
+
+	Future<Map<String, dynamic>> signup(String email, String password) async {
+		prepareUI();
+
+		final Map<String, dynamic> authData = {
+			'email': email,
+			'password': password,
+			'returnSecureToken': true,
+		};
+		final http.Response response = await http.post(
+			authRegisterUrl,
+			headers: {
+				'ContentType': 'application/json',
+			},
+			body: json.encode(authData),
+		);
+		final Map<String, dynamic> responseData = json.decode(response.body);
+		bool hasError = true;
+		String statusMessage = 'Something went wrong';
+
+		if (responseData.containsKey('idToken')) {
+			hasError = false;
+			statusMessage = 'Authentication success';
+		} else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
+			statusMessage = 'This email already exists.';
+		}
+
+		releaseUI();
+
+		return {
+			'success': !hasError,
+			'message': statusMessage,
+		};
+	}
+
 
 	void login(String email, String password) {
 		_authenticatedUser = User(
