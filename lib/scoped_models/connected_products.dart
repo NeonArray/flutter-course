@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rxdart/subjects.dart';
 
 import 'package:flutter_course/env.dart';
 import 'package:flutter_course/models/product.dart';
 import 'package:flutter_course/models/user.dart';
-
+import 'package:flutter_course/models/auth.dart';
 
 /// All of the models are located in this file for the use of private members. If the models were
 /// separated into three files; connected_products, products, user...the private members in
@@ -99,7 +101,7 @@ mixin ProductsModel on ConnectedProductsModel {
 
 		try {
 			final http.Response response = await http.post(
-				baseUrl + '.json',
+				baseUrl + '.json?auth=${_authenticatedUser.token}',
 				body: jsonEncode(productData),
 			);
 
@@ -131,7 +133,7 @@ mixin ProductsModel on ConnectedProductsModel {
 		prepareUI();
 
 		try {
-			final http.Response response = await http.get(baseUrl + '.json');
+			final http.Response response = await http.get(baseUrl + '.json?auth=${_authenticatedUser.token}');
 
 			interrogateStatusCode(response.statusCode);
 
@@ -143,7 +145,18 @@ mixin ProductsModel on ConnectedProductsModel {
 			}
 
 			productListData.forEach((String productId, dynamic productData) {
-				final Product product = Product(id: productId, title: productData['title'], description: productData['description'], image: productData['image'], price: productData['price'], userEmail: productData['userEmail'], userId: productData['userId'],);
+				final Product product = Product(
+					id: productId,
+					title: productData['title'],
+					description: productData['description'],
+					image: productData['image'],
+					price: productData['price'],
+					userEmail: productData['userEmail'],
+					userId: productData['userId'],
+					isFavorite: productData['wishlistUsers'] == null
+							? false
+							: (productData['wishlistUsers'] as Map<String, dynamic>).containsKey(_authenticatedUser.id),
+				);
 
 				fetchedProductList.add(product);
 			});
@@ -176,7 +189,7 @@ mixin ProductsModel on ConnectedProductsModel {
 
 		try {
 			await http.put(
-				baseUrl + '/${selectedProduct.id}.json',
+				baseUrl + '/${selectedProduct.id}.json?auth=${_authenticatedUser.token}',
 				body: json.encode(updateData),
 			);
 			final Product udpatedProduct = Product(
@@ -209,7 +222,7 @@ mixin ProductsModel on ConnectedProductsModel {
 		notifyListeners();
 
 		try {
-			await http.delete(baseUrl + '/' + deletedProductId + '.json');
+			await http.delete(baseUrl + '/' + deletedProductId + '.json?auth=${_authenticatedUser.token}');
 
 			return true;
 		} catch (error) {
@@ -233,25 +246,66 @@ mixin ProductsModel on ConnectedProductsModel {
 	}
 
 
-	void toggleProductFavoriteStatus() {
+	void toggleProductFavoriteStatus() async {
+		final bool isCurrentlyFavorite = selectedProduct.isFavorite;
+		final bool newFavoriteStatus = !isCurrentlyFavorite;
+		final String endpoint = baseUrl + '/${selectedProduct.id}/wishlistUsers/${_authenticatedUser.id}.json?auth=${_authenticatedUser.token}';
+		http.Response response;
+		print(endpoint);
 		_products[selectedProductIndex] = Product(
 			id: selectedProduct.id,
 			title: selectedProduct.title,
 			description: selectedProduct.description,
 			price: selectedProduct.price,
 			image: selectedProduct.image,
-			isFavorite: !selectedProduct.isFavorite,
+			isFavorite: newFavoriteStatus,
 			userEmail: _authenticatedUser.email,
 			userId: _authenticatedUser.id,
 		);
 		notifyListeners();
+
+		if (newFavoriteStatus) {
+			response = await http.put(
+				endpoint,
+				body: json.encode(true),
+			);
+		} else {
+			response = await http.delete(endpoint);
+		}
+
+		if (response.statusCode != 200 && response.statusCode != 201) {
+			_products[selectedProductIndex] = Product(
+				id: selectedProduct.id,
+				title: selectedProduct.title,
+				description: selectedProduct.description,
+				price: selectedProduct.price,
+				image: selectedProduct.image,
+				isFavorite: !newFavoriteStatus,
+				userEmail: _authenticatedUser.email,
+				userId: _authenticatedUser.id,
+			);
+			notifyListeners();
+		}
 	}
 }
 
 
 mixin UserModel on ConnectedProductsModel {
+	Timer _authTimer;
+	PublishSubject<bool> _userSubject = PublishSubject();
 
-	Future<Map<String, dynamic>> signup(String email, String password) async {
+
+	PublishSubject<bool> get userSubject {
+		return _userSubject;
+	}
+
+
+	User get user {
+		return _authenticatedUser;
+	}
+
+
+	Future<Map<String, dynamic>> authenticate(String email, String password, [AuthMode mode = AuthMode.Login]) async {
 		prepareUI();
 
 		final Map<String, dynamic> authData = {
@@ -259,10 +313,11 @@ mixin UserModel on ConnectedProductsModel {
 			'password': password,
 			'returnSecureToken': true,
 		};
+
 		final http.Response response = await http.post(
-			authRegisterUrl,
+			mode == AuthMode.Login ? authLoginUrl : authRegisterUrl,
 			headers: {
-				'ContentType': 'application/json',
+				'Content-Type': 'application/json',
 			},
 			body: json.encode(authData),
 		);
@@ -273,6 +328,29 @@ mixin UserModel on ConnectedProductsModel {
 		if (responseData.containsKey('idToken')) {
 			hasError = false;
 			statusMessage = 'Authentication success';
+			_authenticatedUser = User(
+				id: responseData['localId'],
+				email: responseData['email'],
+				token: responseData['idToken'],
+			);
+
+			setAuthTimeout(int.parse(responseData['expiresIn']));
+
+			_userSubject.add(true);
+
+			final DateTime now = DateTime.now();
+			final DateTime expiryTime = now.add(Duration(seconds: int.parse(responseData['expiresIn'])));
+
+			final SharedPreferences prefs = await SharedPreferences.getInstance();
+			prefs.setString('token', responseData['idToken']);
+			prefs.setString('userEmail', responseData['email']);
+			prefs.setString('userId', responseData['localId']);
+			prefs.setString('expiryTime', expiryTime.toIso8601String());
+
+		} else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
+			statusMessage = 'This email was not found.';
+		} else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
+			statusMessage = 'The password is incorrect.';
 		} else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
 			statusMessage = 'This email already exists.';
 		}
@@ -286,12 +364,59 @@ mixin UserModel on ConnectedProductsModel {
 	}
 
 
-	void login(String email, String password) {
-		_authenticatedUser = User(
-			id: '1',
-			email: email,
-			password: password,
+	void logout() async {
+		final SharedPreferences prefs = await SharedPreferences.getInstance();
+		_userSubject.add(false);
+		_authenticatedUser = null;
+		_authTimer.cancel();
+
+		prefs.remove('token');
+		prefs.remove('userEmail');
+		prefs.remove('userId');
+	}
+
+
+	void setAuthTimeout(int timeTillLockout) {
+		_authTimer = Timer(
+			Duration(
+				seconds: timeTillLockout,
+			),
+			logout,
 		);
+	}
+
+
+	void autoAuthenticate() async {
+		final SharedPreferences prefs = await SharedPreferences.getInstance();
+		final String token = prefs.getString('token');
+		final String expiryTimeString = prefs.getString('expiryTime');
+
+		if (token != null) {
+			final DateTime now = DateTime.now();
+			final DateTime parsedExpiryTime = DateTime.parse(expiryTimeString);
+
+			if (parsedExpiryTime.isBefore(now)) {
+				_authenticatedUser = null;
+				notifyListeners();
+				return;
+			}
+
+			final String userEmail = prefs.getString('userEmail');
+			final String userId = prefs.getString('userid');
+			final int tokenLifespan = parsedExpiryTime.difference(now).inSeconds;
+
+			_authenticatedUser = User(
+				id: userId,
+				email: userEmail,
+				token: token,
+			);
+
+			_userSubject.add(true);
+
+			setAuthTimeout(tokenLifespan);
+
+			notifyListeners();
+		}
 	}
 }
 
