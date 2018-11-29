@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_course/pages/product_edit.dart';
 import 'package:flutter_course/pages/product_list.dart';
 import 'package:flutter_course/scoped_models/main.dart';
+import 'package:flutter_course/widgets/ui/logout_list_tile.dart';
+
 
 class ProductsAdminPage extends StatelessWidget {
 	final MainModel model;
 
 	ProductsAdminPage(this.model);
+
 
 	Drawer _buildDrawer(BuildContext context) {
 		return Drawer(
@@ -22,10 +25,13 @@ class ProductsAdminPage extends StatelessWidget {
 						title: Text('All Products'),
 						onTap: () => Navigator.pushReplacementNamed(context, '/'),
 					),
+					Divider(),
+					LogoutListTile(),
 				],
 			),
 		);
 	}
+
 
 	@override
 	Widget build(BuildContext context) {
