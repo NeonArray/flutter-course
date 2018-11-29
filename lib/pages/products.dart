@@ -3,6 +3,7 @@ import 'package:scoped_model/scoped_model.dart';
 
 import 'package:flutter_course/scoped_models/main.dart';
 import 'package:flutter_course/widgets/products/products.dart';
+import 'package:flutter_course/widgets/ui/logout_list_tile.dart';
 
 
 class ProductsPage extends StatefulWidget {
@@ -40,6 +41,8 @@ class _ProductsPageState extends State<ProductsPage> {
 							Navigator.pushReplacementNamed(context, '/admin');
 						},
 					),
+					Divider(),
+					LogoutListTile(),
 				],
 			),
 		);
