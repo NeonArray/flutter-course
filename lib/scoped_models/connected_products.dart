@@ -129,7 +129,7 @@ mixin ProductsModel on ConnectedProductsModel {
 	}
 
 
-	Future<bool> fetchProducts() async {
+	Future<bool> fetchProducts({ onlyForUser = false }) async {
 		prepareUI();
 
 		try {
@@ -154,14 +154,17 @@ mixin ProductsModel on ConnectedProductsModel {
 					userEmail: productData['userEmail'],
 					userId: productData['userId'],
 					isFavorite: productData['wishlistUsers'] == null
-							? false
-							: (productData['wishlistUsers'] as Map<String, dynamic>).containsKey(_authenticatedUser.id),
+						? false
+						: (productData['wishlistUsers'] as Map<String, dynamic>).containsKey(_authenticatedUser.id),
 				);
 
 				fetchedProductList.add(product);
 			});
 
-			_products = fetchedProductList;
+			_products = onlyForUser ? fetchedProductList.where((Product product) {
+				return product.userId == _authenticatedUser.id;
+			}).toList() : fetchedProductList;
+
 			_selectedProductId = null;
 
 			return true;
