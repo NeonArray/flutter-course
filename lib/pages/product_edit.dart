@@ -127,7 +127,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
 			).then((bool success) {
 				if (success) {
 					Navigator.pushReplacementNamed(context, '/products')
-							.then((_) => setSelectedProduct(null));
+							 .then((_) => setSelectedProduct(null));
 				} else {
 					showDialog(
 						context: context,
@@ -179,7 +179,10 @@ class _ProductEditPageState extends State<ProductEditPage> {
 							_buildDescriptionTextField(product),
 							_buildPriceTextField(product),
 							SizedBox(
-								height: 30.0,
+								height: 10.0,
+							),
+							SizedBox(
+								height: 10.0,
 							),
 							_buildSaveButton(),
 						],
